@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SoCal Flood Tracker</title>
+<meta name="description" content="Rachel coastal flood tracker for Southern California: reporter deployment table, tide list, records, live cams.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{--bg:#f6f4ee;--panel:#ffffff;--fg:#1b1a17;--muted:#6b6760;--line:#dcd8cf;--accent:#b8321a;--warn:#b87a1a;--ok:#2d7a4f;--blue:#2457a8;--band:rgba(184,50,26,.14);--shadow:0 2px 10px rgba(0,0,0,.08)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15161a;--panel:#1f2127;--fg:#ecebe6;--muted:#a4a19a;--line:#33363e;--accent:#ff7a5c;--warn:#e0a84a;--ok:#5ec48a;--blue:#7fa8f0;--band:rgba(255,122,92,.18);--shadow:0 2px 10px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#15161a;--panel:#1f2127;--fg:#ecebe6;--muted:#a4a19a;--line:#33363e;--accent:#ff7a5c;--warn:#e0a84a;--ok:#5ec48a;--blue:#7fa8f0;--band:rgba(255,122,92,.18);--shadow:0 2px 10px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(26px,4vw,38px);margin:4px 0 8px;line-height:1.1}
+h2{font-size:19px;margin:28px 0 8px;font-weight:600}
+h3{font-size:15px;margin:0 0 4px;font-weight:600}
+p{margin:0 0 8px}
+.take{font-size:18px;line-height:1.4;max-width:900px}
+.muted{color:var(--muted);font-size:13px}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.nav a{font-size:12px;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--panel)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.grid4{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
+.big{font-family:Georgia,serif;font-size:32px;line-height:1.1}
+.pill{display:inline-block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.r1{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pill.r2{background:var(--warn);color:#fff;border-color:var(--warn)}
+.pill.r3{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill.r4{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px 8px 6px 0;white-space:nowrap}
+td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right}
+tr.hi td{font-weight:600}
+tr.sun td{background:var(--band)}
+.scroll{overflow-x:auto}
+a{color:var(--fg)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tabs button{font:inherit;font-size:13px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--fg);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+#map{height:420px;border-radius:10px;border:1px solid var(--line);background:#cfe3f3}
+.cams{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.cam{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.cam .frame{position:relative;aspect-ratio:16/9;background:#111;cursor:pointer}
+.cam .frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85}
+.cam .frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.cam .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;text-shadow:0 1px 4px #000;font-size:14px}
+.cam .play span{background:rgba(0,0,0,.55);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.5)}
+.cam .meta{padding:8px 10px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+.btn{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);cursor:pointer}
+.chart{position:relative;min-height:260px}
+.tip{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap}
+ul{margin:0;padding-left:18px}
+li{margin:3px 0}
+.src{font-size:12px;color:var(--muted)}
+/* minimal leaflet css */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;touch-action:none;-webkit-tap-highlight-color:transparent}
+.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{user-select:none;-webkit-user-drag:none}
+.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-zoom-box{width:0;height:0;box-sizing:border-box;z-index:800}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{transition:none}
+.leaflet-interactive{cursor:pointer}
+.leaflet-tooltip{position:absolute;padding:4px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:var(--shadow);font-size:12px}
+.leaflet-tooltip-top{margin-top:-8px}
+.leaflet-control-container{display:none}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">Tropical Storm Rachel · Southern California coast · Oct 10 to 13</div>
+<h1>Coastal flood tracker: where the water goes, and where to send the reporter</h1>
+<p class="take" id="take">Loading…</p>
+<p class="muted">Built Friday Oct 9, 2:40 PM PDT. Tide predictions are NOAA astronomical values and do not change. The observed-water figures are from this morning's gauges. The forecast text and the storm's track will change, so check the live links before each deployment. Compiled by Claude for the Chronicle weather desk; not an official forecast.</p>
+<div class="nav">
+<a href="#sec-deploy">Deployment</a><a href="#sec-map">Map</a><a href="#sec-tides">Tide times</a><a href="#sec-records">Records</a><a href="#sec-petss">Surge guidance</a><a href="#sec-cams">Webcams</a><a href="#sec-alerts">Alerts</a><a href="#sec-live">Live links</a>
+</div>
+
+<div class="grid4" id="tiles" style="margin-top:12px"></div>
+
+<h2 id="sec-deploy">Reporter deployment: risk and action table</h2>
+<p class="muted">Ranked by what has already flooded, how exposed each spot is to a south swell, and Sunday's water. "Sunday water" is the predicted high tide at the nearest NOAA gauge plus the extra water that gauge showed this morning. It does not include wave runup, which is what actually overtops berms, so treat it as a floor. Arrive 60 to 90 minutes before high tide.</p>
+<div class="card scroll"><table id="deploy-table"><thead><tr><th>Priority</th><th>Location</th><th>Sun AM high tide</th><th class="n">Sunday water (ft)</th><th class="n">Gauge record (ft)</th><th>What's happening</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+
+<div class="grid" style="margin-top:12px" id="plan"></div>
+
+<h2 id="sec-map">Map</h2>
+<div id="map"></div>
+<div class="card" id="svgmap" hidden></div>
+<p class="muted" id="map-note">Red: send the reporter. Orange: strong second. Blue: watch. Gray: lower. Hover a dot for details.</p>
+
+<h2 id="sec-tides">High and low tides, Friday to Tuesday</h2>
+<p class="muted">NOAA CO-OPS predictions in feet above MLLW, Pacific time. Newport Beach is from US Harbors (NOAA subordinate station). Sunday morning rows are shaded; the weekend's highest high is bold. Real water will run well above these, see Records.</p>
+<div class="tabs" id="station-tabs"></div>
+<div class="grid">
+<div class="card"><h3 id="chart-title">Predicted tide</h3><div class="chart" id="chart"></div><p class="muted">Dots are predicted highs and lows. The shaded band is the morning high-water range NWS expects. The dashed line is the gauge record.</p></div>
+<div class="card scroll"><table id="tide-table"><thead><tr><th>Day</th><th>Time</th><th>Tide</th><th class="n">Pred ft</th><th class="n">+ today's extra</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<h2 id="sec-records">Tide records at key gauges</h2>
+<p class="muted">Highest observed water levels, feet above MLLW, pulled from NOAA CO-OPS verified data for the three events that set the modern marks: January 1983 (El Niño storm), January 2005 (king tide plus storm), and November 2015 (El Niño king tide, the official record at San Diego, La Jolla and Santa Barbara per the California Ocean Protection Council). January 2026 shown for comparison. "This morning" is Friday's observed peak versus prediction.</p>
+<div class="card scroll"><table id="rec-table"><thead><tr><th>Gauge</th><th class="n">Record (ft)</th><th>When</th><th class="n">Jan 2005</th><th class="n">Nov 2015</th><th class="n">Jan 2026</th><th class="n">Fri pred</th><th class="n">Fri observed</th><th class="n">Extra</th><th class="n">Sun pred</th><th class="n">Sun pred + extra</th></tr></thead><tbody></tbody></table></div>
+<p class="muted" style="margin-top:8px">Santa Barbara has no verified data for January 2005 (gauge gap). Los Angeles' highest value among the events checked is January 2005; the 1983 peak there was 7.82 ft. Santa Monica's record is not confirmed by an official source; 7.85 ft (Jan 10, 2005) is the highest in the events checked. The NOAA "top 10 water levels" tab in the Inundation Dashboard is the authoritative list; it is linked under Live links.</p>
+
+<h2 id="sec-petss">Surge plus tide guidance (P-ETSS)</h2>
+<p class="muted">The NWS probabilistic surge model you flagged. These pages render in the browser, so they open in a new tab with your settings preserved. Read the 10 percent exceedance line as the reasonable worst case and the 50 percent line as the expected case. P-ETSS is extratropical guidance and does not model Rachel's wave setup, so add runup on top.</p>
+<div class="grid4" id="petss"></div>
+
+<h2 id="sec-cams">Webcams, north to south</h2>
+<p class="muted">Click a cam to start it (keeps the page light). YouTube cams play inline; the rest are the providers' own players. Three IDs marked "unverified" could not be checked from here. No embeddable camera turned up for the Long Beach Peninsula, Seal Beach, Balboa Peninsula or Imperial Beach; links to the nearest non-embeddable options are listed below the grid.</p>
+<div class="card" id="embed-warn" hidden style="border-color:var(--accent)"><b>Video is blocked on this hosted page.</b> The Claude artifact host does not allow embedded players or outside images. Download the HTML file from the chat and open it in Chrome: every cam plays there and the map gets real tiles. On this page the cards below link out to each cam.</div>
+<div class="btnrow"><button class="btn" id="play-all">Start all cams</button><button class="btn" id="stop-all">Stop all</button></div>
+<div class="cams" id="cams"></div>
+<div class="card" style="margin-top:12px"><h3>Gaps: open in a new tab</h3><ul id="cam-links"></ul></div>
+
+<h2 id="sec-alerts">Alerts in effect</h2>
+<div class="grid" id="alerts"></div>
+
+<h2 id="sec-live">Live links: check before each move</h2>
+<div class="grid4" id="links"></div>
+
+<h2>Sources</h2>
+<p class="src" id="sources"></p>
+</div>
+
+<script>
+const D = {
+anom: { 'Los Angeles': {pred:5.93, obs:7.17, t:'8:54 AM'}, 'San Diego': {pred:6.27, obs:7.72, t:'8:48 AM'} },
+// extra water applied per station (gauge measured where available; nearest gauge otherwise)
+extra: { 'Santa Barbara':1.24, 'Santa Monica':1.24, 'Los Angeles':1.24, 'Newport Beach':1.45, 'La Jolla':1.45, 'San Diego':1.45 },
+extraNote: { 'Santa Barbara':'LA gauge value, nearest with data', 'Santa Monica':'LA gauge value, nearest with data', 'Los Angeles':'measured at this gauge', 'Newport Beach':'San Diego gauge value', 'La Jolla':'San Diego gauge value', 'San Diego':'measured at this gauge' },
+records: {
+ 'Santa Barbara': {rec:7.49, when:'Nov 26, 2015', y2005:null, y2015:7.49, y2026:null},
+ 'Santa Monica': {rec:7.85, when:'Jan 10, 2005', y2005:7.85, y2015:7.71, y2026:null},
+ 'Los Angeles': {rec:7.92, when:'Jan 10, 2005', y2005:7.92, y2015:7.75, y2026:7.58},
+ 'Newport Beach': {rec:null, when:'No long-term gauge', y2005:null, y2015:null, y2026:null},
+ 'La Jolla': {rec:7.81, when:'Nov 25, 2015', y2005:7.66, y2015:7.81, y2026:null},
+ 'San Diego': {rec:8.24, when:'Nov 25, 2015 (8.14 on Jan 27, 1983)', y2005:7.98, y2015:8.24, y2026:7.94}
+},
+nws: { 'Santa Barbara':[6.6,7.2,'NWS Los Angeles beach hazards statement'], 'Santa Monica':[7.0,7.6,'NWS Los Angeles advisory'], 'Los Angeles':[7.0,7.6,'NWS Los Angeles advisory'], 'Newport Beach':[6.5,7.0,'NWS San Diego advisory'], 'La Jolla':[6.5,7.0,'NWS San Diego advisory'], 'San Diego':[6.5,7.0,'NWS San Diego advisory'] },
+tides: {
+'Santa Barbara':[['10-09','03:05',0.57,'L'],['10-09','09:19',5.71,'H'],['10-09','15:40',0.39,'L'],['10-09','21:43',4.96,'H'],['10-10','03:32',1.02,'L'],['10-10','09:45',5.89,'H'],['10-10','16:20',0.15,'L'],['10-10','22:27',4.61,'H'],['10-11','03:56',1.49,'L'],['10-11','10:11',5.95,'H'],['10-11','17:00',0.06,'L'],['10-11','23:13',4.22,'H'],['10-12','04:20',1.96,'L'],['10-12','10:37',5.89,'H'],['10-12','17:41',0.11,'L'],['10-13','00:02',3.86,'H'],['10-13','04:42',2.39,'L'],['10-13','11:03',5.72,'H'],['10-13','18:25',0.27,'L']],
+'Santa Monica':[['10-09','02:47',0.43,'L'],['10-09','09:02',5.84,'H'],['10-09','15:20',0.30,'L'],['10-09','21:23',5.11,'H'],['10-10','03:14',0.85,'L'],['10-10','09:27',6.01,'H'],['10-10','15:59',0.05,'L'],['10-10','22:04',4.73,'H'],['10-11','03:39',1.30,'L'],['10-11','09:52',6.05,'H'],['10-11','16:38',-0.04,'L'],['10-11','22:47',4.32,'H'],['10-12','04:02',1.75,'L'],['10-12','10:17',5.97,'H'],['10-12','17:17',0.03,'L'],['10-12','23:33',3.90,'H'],['10-13','04:23',2.18,'L'],['10-13','10:42',5.78,'H'],['10-13','18:00',0.21,'L']],
+'Los Angeles':[['10-09','02:44',0.4,'L'],['10-09','08:59',5.9,'H'],['10-09','15:17',0.3,'L'],['10-09','21:20',5.2,'H'],['10-10','03:11',0.8,'L'],['10-10','09:24',6.1,'H'],['10-10','15:55',0.0,'L'],['10-10','22:02',4.8,'H'],['10-11','03:36',1.3,'L'],['10-11','09:49',6.1,'H'],['10-11','16:33',-0.1,'L'],['10-11','22:44',4.4,'H'],['10-12','03:59',1.7,'L'],['10-12','10:13',6.1,'H'],['10-12','17:12',0.0,'L'],['10-12','23:29',4.0,'H'],['10-13','04:20',2.2,'L'],['10-13','10:38',5.9,'H'],['10-13','17:54',0.2,'L']],
+'Newport Beach':[['10-09','02:44',0.4,'L'],['10-09','08:50',5.7,'H'],['10-09','15:17',0.3,'L'],['10-09','21:11',5.0,'H'],['10-10','03:11',0.8,'L'],['10-10','09:15',5.9,'H'],['10-10','15:55',0.0,'L'],['10-10','21:53',4.6,'H'],['10-11','03:36',1.2,'L'],['10-11','09:40',5.9,'H'],['10-11','16:33',-0.1,'L'],['10-11','22:35',4.2,'H'],['10-12','03:59',1.7,'L'],['10-12','10:04',5.8,'H'],['10-12','17:12',0.0,'L'],['10-12','23:20',3.8,'H'],['10-13','04:20',2.1,'L'],['10-13','10:29',5.6,'H'],['10-13','17:54',0.2,'L']],
+'La Jolla':[['10-09','02:38',0.39,'L'],['10-09','08:52',5.73,'H'],['10-09','15:10',0.25,'L'],['10-09','21:15',5.04,'H'],['10-10','03:05',0.79,'L'],['10-10','09:17',5.91,'H'],['10-10','15:48',0.01,'L'],['10-10','21:56',4.67,'H'],['10-11','03:30',1.24,'L'],['10-11','09:41',5.95,'H'],['10-11','16:26',-0.07,'L'],['10-11','22:38',4.26,'H'],['10-12','03:53',1.69,'L'],['10-12','10:06',5.87,'H'],['10-12','17:05',0.01,'L'],['10-12','23:23',3.84,'H'],['10-13','04:13',2.13,'L'],['10-13','10:31',5.68,'H'],['10-13','17:46',0.22,'L']],
+'San Diego':[['10-09','02:43',0.37,'L'],['10-09','08:55',6.27,'H'],['10-09','15:14',0.25,'L'],['10-09','21:14',5.55,'H'],['10-10','03:10',0.77,'L'],['10-10','09:21',6.44,'H'],['10-10','15:51',0.02,'L'],['10-10','21:54',5.17,'H'],['10-11','03:34',1.23,'L'],['10-11','09:47',6.48,'H'],['10-11','16:29',-0.04,'L'],['10-11','22:35',4.73,'H'],['10-12','03:57',1.70,'L'],['10-12','10:12',6.37,'H'],['10-12','17:07',0.06,'L'],['10-12','23:17',4.27,'H'],['10-13','04:18',2.15,'L'],['10-13','10:37',6.14,'H'],['10-13','17:48',0.29,'L']]
+},
+spots:[
+ {r:1,name:'Balboa Peninsula, Newport Beach',lat:33.605,lng:-117.905,g:'Newport Beach',sun:'9:40 AM',what:'Streets flooded for blocks Thu night and Fri. Local emergency declared Fri; city says avoid the peninsula. 6 crews rebuilding berms, 18 pumps, 86 tide valves.',act:'Primary. On scene by 8:15 AM Sun. Pair with Sat 9:15 AM tide for the prep story.',cam:'none'},
+ {r:1,name:'Alamitos Peninsula, Long Beach',lat:33.745,lng:-118.125,g:'Los Angeles',sun:'9:49 AM',what:'Waves damaged homes, boardwalk and a seawall this week. NWS names it for isolated damage. Sandbags at Claremont Beach lot, 5400 E. Ocean.',act:'Primary. 25 miles from Newport; same tide can cover both if the reporter starts here at 8:00 and moves south, or splits with a stringer.',cam:'none'},
+ {r:2,name:'Seal Beach and Sunset Beach',lat:33.735,lng:-118.10,lab:'below',g:'Los Angeles',sun:'9:45 AM',what:'Between the two primaries on PCH. Flooded in Jan 2013 and past south swells. Not named in this week\'s products.',act:'Drive-by between the two primaries.',cam:'none'},
+ {r:2,name:'Mission Beach and Midway, San Diego',lat:32.775,lng:-117.252,g:'San Diego',sun:'9:47 AM',what:'City expects localized flooding where rain meets high tide; road closures likely at Frontage Rd and PCH in Midway. Inside the Tropical Storm Watch. SD gauge ran 17 inches above prediction this morning; Sunday water near the 2005 mark.',act:'Strong second if you have two people. Overnight Sat is the wind and rain story; Sun AM tide is the flood story.',cam:'Pacific Terrace / Mission Beach'},
+ {r:2,name:'Imperial Beach',lat:32.579,lng:-117.133,g:'San Diego',sun:'9:47 AM',what:'Closest U.S. beach town to the track, south-facing, chronic flooder. Not named this week.',act:'Second for a San Diego-based reporter; low-lying streets near Seacoast Dr.',cam:'none'},
+ {r:3,name:'Laguna Beach, PCH',lat:33.542,lng:-117.785,g:'Newport Beach',sun:'9:40 AM',what:'Seawater over part of PCH and sidewalks earlier this week.',act:'Watch; 15 minutes south of Newport.',cam:'none'},
+ {r:3,name:'La Jolla Shores',lat:32.857,lng:-117.257,g:'La Jolla',sun:'9:41 AM',what:'Flooded in Jan 2013 king tides. Scripps gauge is here, so this is where the numbers come from.',act:'Watch; good cams.',cam:'Scripps'},
+ {r:3,name:'Malibu and Santa Monica',lat:34.01,lng:-118.50,g:'Santa Monica',sun:'9:52 AM',what:'Same advisory; beach lots, bike paths and harbor walkways flood around high tide.',act:'Watch; lower priority than Long Beach south.',cam:'Pacific Park / Venice'},
+ {r:4,name:'Ventura and Santa Barbara',lat:34.27,lng:-119.29,g:'Santa Barbara',sun:'10:11 AM',what:'Beach hazards statement only; minor tidal overflow expected.',act:'Lower.',cam:'Ventura Pier'}
+],
+plan:[
+ {rank:1,win:'Sunday morning high tide',when:'Sun Oct 11, on scene by 8:00 AM, stay to 11:00 AM',where:'Long Beach (Alamitos Peninsula) to Newport Beach (Balboa Peninsula)',why:'Highest tide of the weekend with the biggest swell and the most extra water. NWS calls Sunday the greatest risk day. Both spots are already damaged.'},
+ {rank:2,win:'Saturday morning high tide',when:'Sat Oct 10, 8:00 to 10:30 AM',where:'Newport Beach, Balboa Peninsula',why:'Nearly the same predicted tide as Sunday, before the storm swell. Berm crews, pumps, residents prepping, emergency declaration.'},
+ {rank:3,win:'Storm passage',when:'Sat Oct 10 about 10 PM to Sun dawn',where:'San Diego County: Mission Beach, Midway, Imperial Beach',why:'Rachel closest overnight with wind and rain near low tide. Wind and rain story, then stay for the 9:47 AM tide.'},
+ {rank:4,win:'Monday morning high tide',when:'Mon Oct 12, 8:30 to 11:00 AM',where:'Wherever Sunday hit hardest',why:'Tide still near peak, advisory runs to Tuesday, surf eases. Damage, erosion and cleanup.'}
+],
+petss:[
+ ['San Diego (9410170)','https://slosh.nws.noaa.gov/petss/index.php?stid=9410170&nwsli=SDBC1&datum=MLLW&show=1-1-1-1-0-1-1-1'],
+ ['La Jolla (9410230)','https://slosh.nws.noaa.gov/petss/index.php?stid=9410230&nwsli=LJAC1&datum=MLLW&show=1-1-1-1-0-1-1-1'],
+ ['Los Angeles area (9410666)','https://slosh.nws.noaa.gov/petss/index.php?stid=9410666&nwsli=ZZZZZ&datum=MLLW&show=1-1-1-1-0-1-1-1'],
+ ['Santa Barbara (9411340)','https://slosh.nws.noaa.gov/petss/index.php?stid=9411340&nwsli=NTBC1&datum=MLLW&show=1-1-1-1-0-1-1-1']
+],
+cams:[
+ {a:'Ventura',n:'Ventura Harbor entrance',t:'iframe',u:'https://ipcamlive.com/jky47s3rdft73mek111a',p:'Harbor Patrol via IPCamLive',s:'confirmed'},
+ {a:'Santa Monica',n:'Santa Monica Pier, beach view',t:'iframe',u:'https://relay.ozolio.com/pub.api?cmd=embed&oid=EMB_DDLQ00000228',p:'Pacific Park via Ozolio',s:'unverified embed'},
+ {a:'Venice',n:'Venice Beach boardwalk and surf',t:'yt',u:'EO_1LWqsCNE',p:'Venice V Hotel',s:'live thumbnail seen'},
+ {a:'Redondo Beach',n:'Redondo Beach Pier',t:'yt',u:'TuVOKRP7IBA',p:'City of Redondo Beach',s:'live thumbnail seen'},
+ {a:'Huntington Beach',n:'Huntington Beach Pier',t:'yt',u:'mhQjsLBfOoY',p:'City of Huntington Beach',s:'live thumbnail seen'},
+ {a:'Huntington Beach',n:'Lifeguard HQ view',t:'yt',u:'RGYlFjV-dtc',p:'City of Huntington Beach',s:'unverified'},
+ {a:'San Clemente',n:'San Clemente Pier',t:'yt',u:'2c7NV66YzKA',p:'City of San Clemente',s:'unverified'},
+ {a:'Oceanside',n:'Oceanside Pier and surf',t:'yt',u:'OYqo4dqYjh0',p:'San Diego Web Cam',s:'live thumbnail seen'},
+ {a:'Del Mar',n:'17th St beach, looking northwest',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_delmar_17thSt_4K-NW-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'confirmed'},
+ {a:'Del Mar',n:'Dog Beach river mouth',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_dog-beach_rivermouth-ptz-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'confirmed'},
+ {a:'La Jolla',n:'Scripps Pier',t:'iframe',u:'https://embed.cdn-surfline.com/cams/5834a0733421b20545c4b584/64ba68ebf1c960a93d1faba8f86cc16a3ed05913',p:'Scripps / Surfline',s:'confirmed'},
+ {a:'La Jolla',n:'La Jolla Shores',t:'iframe',u:'https://embed.cdn-surfline.com/cams/58349b9b3421b20545c4b54d/199ae31e65bf748a7c7d928332998440490cd979',p:'Scripps / Surfline',s:'confirmed'},
+ {a:'La Jolla',n:'La Jolla Shores Hotel beach',t:'iframe',u:'https://g1.ipcamlive.com/player/player.php?alias=603d26c2977cf',p:'La Jolla Shores Hotel',s:'confirmed'},
+ {a:'Pacific Beach',n:'Crystal Pier from Pacific Terrace',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=pacificbeach_pacterrace-ingest01-hd1-CUST',p:'Pacific Terrace Hotel / HDOnTap',s:'confirmed'},
+ {a:'Coronado',n:'Hotel del Coronado, south beach',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdc_hoteldelsouith-4K_ptz-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'confirmed'},
+ {a:'Coronado',n:'Hotel del Coronado, north beach',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=hoteldelnorth_hdc-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'confirmed'}
+],
+camLinks:[
+ ['Long Beach: Belmont Shore wind cam (Captain Kirk\'s)','https://www.captainkirksusa.com/wind-cam-belmont-shore'],
+ ['Long Beach: harbor cam, not the Peninsula (HDOnTap)','https://hdontap.com/stream/247822/long-beach-harbor-live-webcam/'],
+ ['Seal Beach Pier (Surfline, may need login)','https://www.surfline.com/surf-report/seal-beach-pier-northside/5b71b95fc27dc6001ab8becf'],
+ ['Newport: The Wedge (Surfline, may need login)','https://www.surfline.com/surf-report/the-wedge/5842041f4e65fad6a770882b?camId=5834a1613421b20545c4b591'],
+ ['Newport Pier: Blackie\'s beach cam','https://www.livebeaches.com/webcams/blackies-by-the-sea-beach-cam/'],
+ ['Imperial Beach Pier (Surfline, may need login)','https://www.surfline.com/surf-report/imperial-beach-pier/5842041f4e65fad6a7708844?camId=60d6464ecff829503e4f2416'],
+ ['Mission Beach and Crystal Pier PTZ (HDOnTap page)','https://hdontap.com/stream/475932/mission-beach-and-crystal-pier-live-webcam/'],
+ ['Ventura Pier and promenade (HDOnTap page)','https://hdontap.com/stream/073571/ventura-pier-and-promenade-live-webcam/']
+],
+alerts:[
+ ['NWS Los Angeles','Coastal Flood Advisory','Ventura County beaches, Malibu coast, LA County beaches, Catalina','Until 2 PM Tue Oct 13','Minor to moderate flooding, isolated significant flooding possible, especially Sunday. Morning highs of 7.0 to 7.6 ft. A targeted Coastal Flood Warning may be considered. Issued 1:10 PM Thu Oct 8.'],
+ ['NWS San Diego','Coastal Flood Advisory','Orange County and San Diego County coastal areas','Until 2 PM Tue Oct 13','Flooding of beach lots, boardwalks and roads around high tide; morning highs 6.5 to 7.0 ft (Wed text). Later NWS statements via local media: Sunday surf 6 to 9 ft in OC, high confidence in impactful flooding.'],
+ ['National Hurricane Center','Tropical Storm Watch','U.S.-Mexico border to the San Diego and Orange county line','Until dropped','Advisory 51, 2 PM Fri: 45 mph, 775 mi SW of San Diego, moving NE at 7 mph. Peak 65 mph forecast off northern Baja Sat night; inland Sunday. Moderate to isolated major coastal flooding through early next week.'],
+ ['NWS Los Angeles','Beach Hazards Statement','Santa Barbara and San Luis Obispo county beaches','Sat 8 AM to Mon 2 PM','Minor tidal overflow, rip currents. Morning highs 6.6 to 7.2 ft.']
+],
+links:[
+ ['NHC','Latest Rachel advisory','https://www.nhc.noaa.gov/mobile/index.html'],
+ ['NWS LOX','Coastal hazard message','https://mesonet.agron.iastate.edu/wx/afos/p.php?pil=CFWLOX'],
+ ['NWS SGX','Coastal hazard message','https://forecast.weather.gov/product.php?site=SGX&issuedby=SGX&product=CFW&format=CI&version=1&glossary=0'],
+ ['NWS SGX','Forecast discussion','https://forecast.weather.gov/product.php?site=sgx&issuedby=SGX&product=AFD'],
+ ['NOAA','Inundation Dashboard (records, thresholds, forecasts)','https://tidesandcurrents.noaa.gov/inundationdb/'],
+ ['Gauge','Los Angeles observed vs predicted','https://tidesandcurrents.noaa.gov/waterlevels.html?id=9410660'],
+ ['Gauge','Santa Monica','https://tidesandcurrents.noaa.gov/waterlevels.html?id=9410840'],
+ ['Gauge','La Jolla','https://tidesandcurrents.noaa.gov/waterlevels.html?id=9410230'],
+ ['Gauge','San Diego','https://tidesandcurrents.noaa.gov/waterlevels.html?id=9410170'],
+ ['Gauge','Santa Barbara','https://tidesandcurrents.noaa.gov/waterlevels.html?id=9411340'],
+ ['Buoy','San Pedro 46222','https://www.ndbc.noaa.gov/station_page.php?station=46222'],
+ ['Buoy','Oceanside Offshore 46224','https://www.ndbc.noaa.gov/station_page.php?station=46224'],
+ ['Buoy','Torrey Pines Outer 46225','https://www.ndbc.noaa.gov/station_page.php?station=46225'],
+ ['Buoy','Point Loma South 46232','https://www.ndbc.noaa.gov/station_page.php?station=46232']
+],
+sources:[
+ ['NHC Advisory 51 (Cyclocane mirror)','https://www.cyclocane.com/rachel-storm-tracker/'],['NWS LOX CFW','https://mesonet.agron.iastate.edu/wx/afos/p.php?pil=CFWLOX'],['NWS SGX CFW','https://forecast.weather.gov/product.php?site=SGX&issuedby=SGX&product=CFW&format=CI&version=1&glossary=0'],['NWS SGX AFD','https://forecast.weather.gov/product.php?site=sgx&issuedby=SGX&product=AFD'],['NOAA CO-OPS API (tides, verified water levels)','https://api.tidesandcurrents.noaa.gov/api/prod/'],['CA OPC 2015 record memo','https://opc.ca.gov/webmaster/_media_library/2015/12/RecordBreakingSeaLevelsMemo.pdf'],['Weather West, Oct 9','https://weatherwest.com/archives/44111'],['NBC4 Newport','https://www.nbclosangeles.com/weather-news/newport-beach-flooding/3953749/'],['MyNewsLA Newport emergency','https://mynewsla.com/business/2026/10/09/newport-beach-declares-local-emergency-amid-coastal-flooding/'],['NBC4 Long Beach','https://www.nbclosangeles.com/news/local/long-beach-hurricane-rachel-coastal-flooding/3953325/'],['FOX 11 Long Beach','https://www.foxla.com/news/long-beach-coastal-flooding-tropical-storm-rachel'],['Times of San Diego','https://timesofsandiego.com/community/2026/10/09/tropical-storm-watch-issued-for-san-diego-county-from-friday-evening-through-tuesday/'],['Voice of OC','https://voiceofoc.org/2026/10/orange-county-beach-cities-flood-ahead-of-weekend-storms/'],['NWS SGX day in history (Jan 11, 2013)','https://www.weather.gov/media/sgx/Dayinhistory/dayhistory0111.pdf'],['US Harbors Balboa Pier tides','https://www.usharbors.com/harbor/california/balboa-pier-newport-beach-ca/tides/']
+]
+};
+const canEmbed=!(window.__forceSvg)&&!/claude|anthropic/i.test(location.hostname);
+const $=s=>document.querySelector(s);
+const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;};
+const f1=v=>v==null?'—':(Math.round(v*10)/10).toFixed(1);
+const f2=v=>v==null?'—':v.toFixed(2);
+const DAYS={'10-09':'Fri','10-10':'Sat','10-11':'Sun','10-12':'Mon','10-13':'Tue'};
+const t12=h=>{const [H,M]=h.split(':').map(Number);return ((H+11)%12+1)+':'+String(M).padStart(2,'0')+(H<12?' AM':' PM');};
+const sunHigh=st=>D.tides[st].find(r=>r[0]==='10-11'&&r[3]==='H');
+
+// header
+(()=>{const la=D.anom['Los Angeles'],sd=D.anom['San Diego'];
+$('#take').textContent=`Sunday morning is the window, 9:40 to 9:50 AM from San Diego to Santa Monica. The ocean is already running ${Math.round((la.obs-la.pred)*12)} to ${Math.round((sd.obs-sd.pred)*12)} inches above the tide table before Rachel's swell arrives: Los Angeles measured ${f2(la.obs)} ft this morning on a ${f2(la.pred)} ft prediction, San Diego ${f2(sd.obs)} on ${f2(sd.pred)}. Carry that forward and Sunday's still water is about ${f1(6.1+1.24)} ft at Los Angeles and ${f1(6.48+1.45)} ft at San Diego, within a few inches of the January 2005 marks, before waves. Send the reporter to the Long Beach to Newport corridor.`;
+const tiles=[['LA gauge this morning',f2(la.obs)+' ft','vs '+f2(la.pred)+' predicted at '+la.t+', +'+Math.round((la.obs-la.pred)*12)+' in'],['San Diego gauge this morning',f2(sd.obs)+' ft','vs '+f2(sd.pred)+' predicted at '+sd.t+', +'+Math.round((sd.obs-sd.pred)*12)+' in'],['Sunday, San Diego, pred + extra',f1(6.48+1.45)+' ft','Record 8.24 (2015). Jan 2005: 7.98'],['Sunday, Los Angeles, pred + extra',f1(6.1+1.24)+' ft','Record 7.92 (Jan 2005). NWS expects 7.0 to 7.6']];
+tiles.forEach(([k,v,s])=>{const c=el('div','card');c.append(el('div','pill',k),el('div','big',v),el('div','muted',s));$('#tiles').append(c);});})();
+
+// deployment table
+(()=>{const tb=$('#deploy-table tbody');const lab={1:'Send',2:'Second',3:'Watch',4:'Lower'};
+D.spots.forEach(s=>{const sh=sunHigh(s.g);const water=sh[2]+D.extra[s.g];const rec=D.records[s.g].rec;
+const tr=el('tr',s.r===1?'hi':'');tr.append(el('td','',''),el('td','',s.name),el('td','',s.sun+' ('+s.g+' gauge)'),el('td','n',f1(water)),el('td','n',rec?f1(rec):'—'),el('td','',s.what),el('td','',s.act));
+tr.firstChild.append(Object.assign(el('span','pill r'+s.r,s.r+' · '+lab[s.r])));tb.append(tr);});
+D.plan.forEach(p=>{const c=el('div','card');c.append(el('span','pill r'+Math.min(p.rank,4),p.rank+'. '+p.win),el('h3','',p.when),el('p','',p.where),el('p','muted',p.why));$('#plan').append(c);});})();
+
+// map
+const COAST=[[34.45,-120.47],[34.42,-120.00],[34.41,-119.69],[34.40,-119.52],[34.37,-119.47],[34.27,-119.29],[34.14,-119.21],[34.09,-119.06],[34.04,-118.93],[34.01,-118.81],[34.03,-118.68],[34.04,-118.55],[34.01,-118.50],[33.96,-118.46],[33.88,-118.41],[33.80,-118.39],[33.77,-118.42],[33.72,-118.37],[33.70,-118.29],[33.72,-118.27],[33.75,-118.19],[33.74,-118.11],[33.70,-118.06],[33.65,-117.99],[33.61,-117.93],[33.59,-117.87],[33.54,-117.78],[33.46,-117.70],[33.42,-117.62],[33.39,-117.59],[33.30,-117.50],[33.19,-117.38],[33.15,-117.35],[33.04,-117.30],[32.96,-117.27],[32.88,-117.25],[32.85,-117.27],[32.80,-117.26],[32.75,-117.25],[32.72,-117.26],[32.67,-117.24],[32.68,-117.18],[32.58,-117.13],[32.53,-117.12],[32.45,-117.10]];
+const COUNTY=[['Santa Barbara',[[34.37,-119.47],[34.55,-119.45]],[34.50,-120.0]],['Ventura',[[34.04,-118.93],[34.55,-118.88]],[34.42,-119.1]],['Los Angeles',[[33.74,-118.11],[33.96,-117.78],[34.55,-117.78]],[34.3,-118.3]],['Orange',[[33.39,-117.59],[33.60,-117.40],[33.96,-117.78]],[33.72,-117.75]],['San Diego',[],[33.2,-116.66]]];
+function svgMap(){const box=$('#svgmap');box.hidden=false;$('#map').hidden=true;box.replaceChildren();
+const W=900,H=600,lng0=-120.6,lng1=-116.6,lat0=34.6,k=W/(lng1-lng0);
+const X=lng=>(lng-lng0)*k, Y=lat=>(lat0-lat)*k*1.199;
+const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('width','100%');svg.style.display='block';svg.setAttribute('role','img');svg.setAttribute('aria-label','Schematic map of the Southern California coast with deployment priorities');
+const add=(tag,attrs,txt)=>{const e=document.createElementNS(ns,tag);for(const kk in attrs)e.setAttribute(kk,attrs[kk]);if(txt!=null)e.textContent=txt;svg.append(e);return e;};
+add('rect',{x:0,y:0,width:W,height:H,fill:'#cfe3f3'});
+const land=COAST.map(([a,b])=>X(b).toFixed(1)+','+Y(a).toFixed(1)).join(' ')+` ${X(-116.6)},${Y(32.45).toFixed(1)} ${X(-116.6)},${Y(34.6)} ${X(-120.6)},${Y(34.6)}`;
+add('polygon',{points:land,fill:'#ebe6d8',stroke:'#7a7366','stroke-width':1.5,'stroke-linejoin':'round'});
+add('ellipse',{cx:X(-118.42),cy:Y(33.38),rx:22,ry:7,fill:'#ebe6d8',stroke:'#7a7366',transform:`rotate(-30 ${X(-118.42)} ${Y(33.38)})`});add('text',{x:X(-118.42),y:Y(33.38)+22,'text-anchor':'middle','font-size':11,fill:'#5a554c'},'Catalina');
+add('line',{x1:X(-117.12),x2:X(-116.6),y1:Y(32.53),y2:Y(32.53),stroke:'#7a7366','stroke-dasharray':'6 4'});add('text',{x:X(-116.65),y:Y(32.53)+14,'text-anchor':'end','font-size':11,fill:'#5a554c'},'MEXICO');
+COUNTY.forEach(([n,line,lab])=>{if(line.length)add('polyline',{points:line.map(([a,b])=>X(b)+','+Y(a)).join(' '),fill:'none',stroke:'#7a7366','stroke-dasharray':'4 4'});add('text',{x:X(lab[1]),y:Y(lab[0]),'font-size':12,fill:'#5a554c','letter-spacing':'.08em','text-anchor':n==='San Diego'?'end':'start'},n.toUpperCase());});
+const col={1:'#c62d10',2:'#d98a1b',3:'#2457a8',4:'#777'};
+const sorted=D.spots.slice().sort((a,b)=>b.r-a.r);
+sorted.forEach(s=>{const sh=sunHigh(s.g);const cx=X(s.lng),cy=Y(s.lat),r=s.r===1?11:s.r===2?8:6;const g=document.createElementNS(ns,'g');const c=document.createElementNS(ns,'circle');c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',r);c.setAttribute('fill',col[s.r]);c.setAttribute('stroke','#fff');c.setAttribute('stroke-width',2);const t=document.createElementNS(ns,'title');t.textContent=`${s.name}. Sunday high ${s.sun}, about ${f1(sh[2]+D.extra[s.g])} ft. ${s.act}`;c.append(t);g.append(c);
+const lab=document.createElementNS(ns,'text');if(s.lab==='below'){lab.setAttribute('x',cx);lab.setAttribute('y',cy+r+14);lab.setAttribute('text-anchor','middle');}else{lab.setAttribute('x',cx-r-5);lab.setAttribute('y',cy+4);lab.setAttribute('text-anchor','end');}lab.setAttribute('font-size',s.r<=2?12:11);lab.setAttribute('font-weight',s.r===1?'700':'400');lab.setAttribute('fill','#1b1a17');lab.setAttribute('stroke','#cfe3f3');lab.setAttribute('stroke-width',3);lab.setAttribute('paint-order','stroke');lab.textContent=s.name.split(',')[0];g.append(lab);svg.append(g);});
+box.append(svg);}
+(()=>{if(!canEmbed||typeof L==='undefined'){svgMap();return;}
+const m=L.map('map',{zoomControl:false,attributionControl:false}).setView([33.45,-118.0],8);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(m);
+const col={1:'#c62d10',2:'#d98a1b',3:'#2457a8',4:'#777'};
+D.spots.forEach(s=>{const sh=sunHigh(s.g);L.circleMarker([s.lat,s.lng],{radius:s.r===1?12:s.r===2?9:7,color:'#fff',weight:2,fillColor:col[s.r],fillOpacity:.9}).addTo(m)
+.bindTooltip(`<b>${s.name}</b><br>Sun high ${s.sun} · ~${f1(sh[2]+D.extra[s.g])} ft<br>${s.act}`,{direction:'top',offset:[0,-8]});});
+})();
+
+// tides
+let station='Los Angeles';
+function drawTides(){const rows=D.tides[station];const tb=$('#tide-table tbody');tb.replaceChildren();const ex=D.extra[station];
+const maxH=Math.max(...rows.filter(r=>r[3]==='H').map(r=>r[2]));
+rows.forEach(r=>{const tr=el('tr',(r[0]==='10-11'&&r[3]==='H'?'sun ':'')+(r[2]===maxH?'hi':''));tr.append(el('td','',DAYS[r[0]]+' Oct '+r[0].slice(3)),el('td','',t12(r[1])),el('td','',r[3]==='H'?'High':'Low'),el('td','n',f2(r[2])),el('td','n',r[3]==='H'?f1(r[2]+ex):''));tb.append(tr);});
+$('#chart-title').textContent='Predicted tide, '+station+' (+'+Math.round(ex*12)+' in extra this morning, '+D.extraNote[station]+')';
+document.querySelectorAll('#station-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.textContent===station)));
+drawChart();}
+function drawChart(){const box=$('#chart');box.replaceChildren();const rows=D.tides[station];const W=Math.max(300,box.clientWidth),H=260,m={t:24,r:10,b:26,l:30};
+const t0=Date.parse('2026-10-09T00:00:00-07:00'),t1=Date.parse('2026-10-14T00:00:00-07:00');
+const x=t=>m.l+(t-t0)/(t1-t0)*(W-m.l-m.r), y=v=>H-m.b-(v+1)/10*(H-m.t-m.b);
+const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('width','100%');
+const add=(tag,attrs,txt)=>{const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;svg.append(e);return e;};
+const [lo,hi]=D.nws[station];add('rect',{x:m.l,y:y(hi),width:W-m.l-m.r,height:y(lo)-y(hi),fill:'var(--band)'});add('text',{x:m.l+4,y:y(lo)+12,fill:'var(--muted)','font-size':11},'NWS expected morning high water '+lo+' to '+hi);
+[0,2,4,6,8].forEach(v=>{add('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:'var(--line)'});add('text',{x:m.l-5,y:y(v)+4,'text-anchor':'end',fill:'var(--muted)','font-size':11},v);});
+for(let i=0;i<=5;i++){const t=t0+i*864e5;add('line',{x1:x(t),x2:x(t),y1:m.t,y2:H-m.b,stroke:'var(--line)'});if(i<5)add('text',{x:x(t+432e5),y:H-8,'text-anchor':'middle',fill:'var(--muted)','font-size':11},['Fri','Sat','Sun','Mon','Tue'][i]);}
+const rec=D.records[station].rec;if(rec){add('line',{x1:m.l,x2:W-m.r,y1:y(rec),y2:y(rec),stroke:'var(--accent)','stroke-dasharray':'4 3'});add('text',{x:W-m.r-4,y:y(rec)-4,'text-anchor':'end',fill:'var(--accent)','font-size':11},'record '+f2(rec));}
+const pts=rows.map(r=>({t:Date.parse('2026-'+r[0]+'T'+r[1]+':00-07:00'),v:r[2],h:r[3]==='H',time:t12(r[1]),day:DAYS[r[0]]}));
+let d='';for(let i=0;i<pts.length-1;i++){const p=pts[i],q=pts[i+1];for(let k=0;k<=12;k++){const u=k/12,tt=p.t+u*(q.t-p.t),vv=p.v+(q.v-p.v)*(1-Math.cos(Math.PI*u))/2;d+=(d?'L':'M')+x(tt).toFixed(1)+' '+y(vv).toFixed(1);}}
+add('path',{d,fill:'none',stroke:'var(--blue)','stroke-width':2});
+const ex=D.extra[station];let d2='';for(let i=0;i<pts.length-1;i++){const p=pts[i],q=pts[i+1];if(!(p.h||q.h))continue;for(let k=0;k<=12;k++){const u=k/12,tt=p.t+u*(q.t-p.t),vv=p.v+(q.v-p.v)*(1-Math.cos(Math.PI*u))/2+ex;d2+=(d2?'L':'M')+x(tt).toFixed(1)+' '+y(vv).toFixed(1);}}
+add('path',{d:d2,fill:'none',stroke:'var(--warn)','stroke-width':1.5,'stroke-dasharray':'2 3'});add('text',{x:W-m.r-4,y:m.t+10,'text-anchor':'end',fill:'var(--warn)','font-size':11},'dotted: prediction + this morning\'s extra water');
+const now=Date.now();if(now>t0&&now<t1){add('line',{x1:x(now),x2:x(now),y1:m.t,y2:H-m.b,stroke:'var(--fg)','stroke-dasharray':'3 3'});add('text',{x:x(now)+3,y:H-m.b-4,fill:'var(--muted)','font-size':11},'now');}
+const tip=el('div','tip');tip.hidden=true;box.append(tip);
+pts.forEach(p=>{const c=add('circle',{cx:x(p.t),cy:y(p.v),r:3.5,fill:'var(--blue)'});if(p.h&&p.t%864e5<Date.parse('2026-10-09T12:00:00-07:00')%864e5||p.h&&new Date(p.t).getHours()<14)add('text',{x:x(p.t),y:y(p.v)-8,'text-anchor':'middle','font-size':11,fill:'var(--fg)'},W>560?p.time+', '+f1(p.v):f1(p.v));
+const hit=add('circle',{cx:x(p.t),cy:y(p.v),r:12,fill:'transparent'});hit.addEventListener('pointerenter',()=>{tip.textContent=`${p.day} ${p.time}: ${p.h?'High':'Low'} ${f2(p.v)} ft`;tip.hidden=false;const bw=box.clientWidth,sx=x(p.t)*bw/W;tip.style.left=Math.max(0,Math.min(bw-tip.offsetWidth,sx-tip.offsetWidth/2))+'px';tip.style.top=Math.max(0,y(p.v)*bw/W-34)+'px';});hit.addEventListener('pointerleave',()=>tip.hidden=true);});
+box.append(svg);}
+Object.keys(D.tides).forEach(s=>{const b=el('button','',s);b.type='button';b.addEventListener('click',()=>{station=s;drawTides();});$('#station-tabs').append(b);});
+drawTides();addEventListener('resize',drawChart);
+
+// records
+(()=>{const tb=$('#rec-table tbody');Object.keys(D.tides).forEach(st=>{const r=D.records[st];const fri=D.tides[st].find(x=>x[0]==='10-09'&&x[3]==='H');const sun=sunHigh(st);const a=D.anom[st];const ex=D.extra[st];
+const tr=el('tr','');tr.append(el('td','',st),el('td','n',f2(r.rec)),el('td','',r.when),el('td','n',f2(r.y2005)),el('td','n',f2(r.y2015)),el('td','n',f2(r.y2026)),el('td','n',f2(fri[2])),el('td','n',a?f2(a.obs):'—'),el('td','n','+'+f1(ex)+(a?'':'*')),el('td','n',f2(sun[2])),el('td','n',f1(sun[2]+ex)));
+if(r.rec&&sun[2]+ex>=r.rec-0.3)tr.className='hi';tb.append(tr);});
+const n=el('p','muted','* Extra water borrowed from the nearest gauge with data this morning (LA for Santa Barbara and Santa Monica; San Diego for Newport and La Jolla). Bold rows: Sunday estimate within 0.3 ft of the gauge record.');$('#rec-table').parentNode.append(n);})();
+
+// petss
+D.petss.forEach(([n,u])=>{const c=el('div','card');const a=el('a','',n);a.href=u;a.target='_blank';a.rel='noopener';c.append(el('div','pill','P-ETSS'),el('h3'),el('p','muted','Opens the live hydrograph: observed, predicted tide, surge percentiles, MLLW'));c.querySelector('h3').append(a);$('#petss').append(c);});
+
+// cams
+function camCard(c){const d=el('div','cam');const fr=el('div','frame');const meta=el('div','meta');meta.append(el('div','pill',c.a),el('h3','',c.n),el('div','muted',c.p+' · '+c.s));
+const start=()=>{if(fr.dataset.on)return;fr.dataset.on='1';fr.replaceChildren();const f=document.createElement('iframe');f.allow='autoplay; fullscreen';f.allowFullscreen=true;f.referrerPolicy='no-referrer-when-downgrade';f.src=c.t==='yt'?`https://www.youtube.com/embed/${c.u}?autoplay=1&mute=1`:c.u;fr.append(f);};
+const stop=()=>{delete fr.dataset.on;fr.replaceChildren();if(c.t==='yt'){const i=el('img');i.src=`https://i.ytimg.com/vi/${c.u}/hqdefault_live.jpg`;i.alt='';i.loading='lazy';fr.append(i);}const p=el('div','play');p.append(el('span','','▶ Start cam'));fr.append(p);};
+stop();fr.addEventListener('click',start);d.append(fr,meta);d._start=start;d._stop=stop;return d;}
+if(canEmbed){D.cams.forEach(c=>$('#cams').append(camCard(c)));}else{$('#embed-warn').hidden=false;$('#play-all').hidden=true;$('#stop-all').hidden=true;
+D.cams.forEach(c=>{const d=el('div','cam');const meta=el('div','meta');const a=el('a','',c.t==='yt'?'Open on YouTube':'Open player');a.href=c.t==='yt'?`https://www.youtube.com/watch?v=${c.u}`:c.u;a.target='_blank';a.rel='noopener';meta.append(el('div','pill',c.a),el('h3','',c.n),el('div','muted',c.p+' · '+c.s),a);d.append(meta);$('#cams').append(d);});}
+$('#play-all').addEventListener('click',()=>document.querySelectorAll('.cam').forEach(c=>c._start()));
+$('#stop-all').addEventListener('click',()=>document.querySelectorAll('.cam').forEach(c=>c._stop()));
+D.camLinks.forEach(([n,u])=>{const li=el('li');const a=el('a','',n);a.href=u;a.target='_blank';a.rel='noopener';li.append(a);$('#cam-links').append(li);});
+
+// alerts, links, sources
+D.alerts.forEach(([o,p,a,e,d])=>{const c=el('div','card');c.append(el('div','pill',o),el('h3','',p),el('p','',a),el('p','',d),el('p','muted','Ends: '+e));$('#alerts').append(c);});
+D.links.forEach(([k,n,u])=>{const c=el('div','card');const a=el('a','',n);a.href=u;a.target='_blank';a.rel='noopener';c.append(el('div','pill',k),a);$('#links').append(c);});
+D.sources.forEach(([n,u],i)=>{const a=el('a','',n);a.href=u;a.target='_blank';a.rel='noopener';if(i)$('#sources').append(' · ');$('#sources').append(a);});
+</script>
+</body>
+</html>
