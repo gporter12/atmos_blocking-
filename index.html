@@ -117,8 +117,9 @@ li{margin:3px 0}
 <div class="grid4" id="petss"></div>
 
 <h2 id="sec-cams">Webcams, north to south</h2>
-<p class="muted">Click a cam to start it (keeps the page light). YouTube cams play inline; the rest are the providers' own players. Three IDs marked "unverified" could not be checked from here. No embeddable camera turned up for the Long Beach Peninsula, Seal Beach, Balboa Peninsula or Imperial Beach; links to the nearest non-embeddable options are listed below the grid.</p>
-<div class="card" id="embed-warn" hidden style="border-color:var(--accent)"><b>Video is blocked on this hosted page.</b> The Claude artifact host does not allow embedded players or outside images. Download the HTML file from the chat and open it in Chrome: every cam plays there and the map gets real tiles. On this page the cards below link out to each cam.</div>
+<p class="muted">Click a cam to start it, or use Start all. Every YouTube feed was checked live on Friday afternoon at the time shown on its card; the other players were taken from the providers' own embed codes. Still no fixed camera on the Long Beach Peninsula, Seal Beach, or Imperial Beach; the nearest non-embeddable options are listed below the grid.</p>
+<div class="card" id="embed-warn" hidden style="border-color:var(--accent)"><b>Video is blocked on this hosted page.</b> The Claude artifact host does not allow embedded players. Use the web version instead: <a href="https://gporter12.github.io/atmos_blocking-/" target="_blank" rel="noopener">gporter12.github.io/atmos_blocking-</a>. On this page the cards below link out to each cam.</div>
+<div class="card" id="file-warn" hidden style="border-color:var(--accent)"><b>You opened this file from disk.</b> YouTube and the other players refuse to run inside a page with no web address, so the cams will stay black here. Open the web version instead: <a href="https://gporter12.github.io/atmos_blocking-/" target="_blank" rel="noopener">gporter12.github.io/atmos_blocking-</a></div>
 <div class="btnrow"><button class="btn" id="play-all">Start all cams</button><button class="btn" id="stop-all">Stop all</button></div>
 <div class="cams" id="cams"></div>
 <div class="card" style="margin-top:12px"><h3>Gaps: open in a new tab</h3><ul id="cam-links"></ul></div>
@@ -180,22 +181,26 @@ petss:[
  ['Santa Barbara (9411340)','https://slosh.nws.noaa.gov/petss/index.php?stid=9411340&nwsli=NTBC1&datum=MLLW&show=1-1-1-1-0-1-1-1']
 ],
 cams:[
- {a:'Ventura',n:'Ventura Harbor entrance',t:'iframe',u:'https://ipcamlive.com/jky47s3rdft73mek111a',p:'Harbor Patrol via IPCamLive',s:'confirmed'},
- {a:'Santa Monica',n:'Santa Monica Pier, beach view',t:'iframe',u:'https://relay.ozolio.com/pub.api?cmd=embed&oid=EMB_DDLQ00000228',p:'Pacific Park via Ozolio',s:'unverified embed'},
- {a:'Venice',n:'Venice Beach boardwalk and surf',t:'yt',u:'EO_1LWqsCNE',p:'Venice V Hotel',s:'live thumbnail seen'},
- {a:'Redondo Beach',n:'Redondo Beach Pier',t:'yt',u:'TuVOKRP7IBA',p:'City of Redondo Beach',s:'live thumbnail seen'},
- {a:'Huntington Beach',n:'Huntington Beach Pier',t:'yt',u:'mhQjsLBfOoY',p:'City of Huntington Beach',s:'live thumbnail seen'},
- {a:'Huntington Beach',n:'Lifeguard HQ view',t:'yt',u:'RGYlFjV-dtc',p:'City of Huntington Beach',s:'unverified'},
- {a:'San Clemente',n:'San Clemente Pier',t:'yt',u:'2c7NV66YzKA',p:'City of San Clemente',s:'unverified'},
- {a:'Oceanside',n:'Oceanside Pier and surf',t:'yt',u:'OYqo4dqYjh0',p:'San Diego Web Cam',s:'live thumbnail seen'},
- {a:'Del Mar',n:'17th St beach, looking northwest',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_delmar_17thSt_4K-NW-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'confirmed'},
- {a:'Del Mar',n:'Dog Beach river mouth',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_dog-beach_rivermouth-ptz-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'confirmed'},
- {a:'La Jolla',n:'Scripps Pier',t:'iframe',u:'https://embed.cdn-surfline.com/cams/5834a0733421b20545c4b584/64ba68ebf1c960a93d1faba8f86cc16a3ed05913',p:'Scripps / Surfline',s:'confirmed'},
- {a:'La Jolla',n:'La Jolla Shores',t:'iframe',u:'https://embed.cdn-surfline.com/cams/58349b9b3421b20545c4b54d/199ae31e65bf748a7c7d928332998440490cd979',p:'Scripps / Surfline',s:'confirmed'},
- {a:'La Jolla',n:'La Jolla Shores Hotel beach',t:'iframe',u:'https://g1.ipcamlive.com/player/player.php?alias=603d26c2977cf',p:'La Jolla Shores Hotel',s:'confirmed'},
- {a:'Pacific Beach',n:'Crystal Pier from Pacific Terrace',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=pacificbeach_pacterrace-ingest01-hd1-CUST',p:'Pacific Terrace Hotel / HDOnTap',s:'confirmed'},
- {a:'Coronado',n:'Hotel del Coronado, south beach',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdc_hoteldelsouith-4K_ptz-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'confirmed'},
- {a:'Coronado',n:'Hotel del Coronado, north beach',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=hoteldelnorth_hdc-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'confirmed'}
+ {a:'Ventura',n:'Ventura Harbor entrance',t:'iframe',u:'https://ipcamlive.com/jky47s3rdft73mek111a',p:'Harbor Patrol via IPCamLive',s:'embed confirmed'},
+ {a:'Malibu',n:'Malibu Beach 24/7',t:'yt',u:'E0TZTmTK-Ws',p:'LA Times Studios',s:'live, verified 4:50 PM Fri'},
+ {a:'Santa Monica',n:'Santa Monica Beach and Pier',t:'yt',u:'v97JpT3ZA0w',p:'explore.org',s:'live, verified 4:50 PM Fri'},
+ {a:'Venice',n:'Venice Beach boardwalk',t:'yt',u:'EO_1LWqsCNE',p:'Venice V Hotel / Teleport',s:'live, verified 4:50 PM Fri'},
+ {a:'Venice',n:'Venice breakwater surf cam',t:'yt',u:'GBcHDAT_8H4',p:'Venice Vive',s:'live, verified 4:50 PM Fri'},
+ {a:'Redondo Beach',n:'Redondo Beach Pier',t:'yt',u:'TuVOKRP7IBA',p:'City of Redondo Beach',s:'live, verified 4:45 PM Fri'},
+ {a:'Huntington Beach',n:'Huntington Beach Pier',t:'yt',u:'mhQjsLBfOoY',p:'City of Huntington Beach',s:'live, verified 4:45 PM Fri'},
+ {a:'Newport Beach',n:'Street flooding, Newport Beach (news feed)',t:'yt',u:'pmyI5AqRmdc',p:'News Central',s:'live news stream; may end without notice'},
+ {a:'Newport Beach',n:'The Wedge',t:'yt',u:'YTHMolT2PTM',p:'Josh Pomer Surfing',s:'listed live; third-party, may be a rebroadcast'},
+ {a:'San Clemente',n:'San Clemente Pier and beach',t:'yt',u:'2c7NV66YzKA',p:'City of San Clemente',s:'live, verified 4:55 PM Fri'},
+ {a:'Oceanside',n:'Oceanside Pier and surf',t:'yt',u:'OYqo4dqYjh0',p:'San Diego Web Cam',s:'live, verified 4:50 PM Fri'},
+ {a:'Del Mar',n:'17th St beach, looking northwest',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_delmar_17thSt_4K-NW-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'embed confirmed'},
+ {a:'Del Mar',n:'Dog Beach river mouth',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdontap_dog-beach_rivermouth-ptz-HDOTSALES&ratio=16:9&fluid=true',p:'HDOnTap',s:'embed confirmed'},
+ {a:'La Jolla',n:'Scripps Pier',t:'iframe',u:'https://embed.cdn-surfline.com/cams/5834a0733421b20545c4b584/64ba68ebf1c960a93d1faba8f86cc16a3ed05913',p:'Scripps / Surfline',s:'embed confirmed'},
+ {a:'La Jolla',n:'La Jolla Shores',t:'iframe',u:'https://embed.cdn-surfline.com/cams/58349b9b3421b20545c4b54d/199ae31e65bf748a7c7d928332998440490cd979',p:'Scripps / Surfline',s:'embed confirmed'},
+ {a:'La Jolla',n:'La Jolla Shores Hotel beach',t:'iframe',u:'https://g1.ipcamlive.com/player/player.php?alias=603d26c2977cf',p:'La Jolla Shores Hotel',s:'embed confirmed'},
+ {a:'Pacific Beach',n:'Crystal Pier from Pacific Terrace',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=pacificbeach_pacterrace-ingest01-hd1-CUST',p:'Pacific Terrace Hotel / HDOnTap',s:'embed confirmed'},
+ {a:'San Diego Bay',n:'Shelter Island (bay water level)',t:'yt',u:'OUB8NDFSmFI',p:'San Diego Web Cam',s:'live, verified 4:50 PM Fri'},
+ {a:'Coronado',n:'Hotel del Coronado, south beach',t:'iframe',u:'https://portal.hdontap.com/s/embed?stream=hdc_hoteldelsouith-4K_ptz-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'embed confirmed'},
+ {a:'Coronado',n:'Hotel del Coronado, north beach',t:'iframe',u:'https://portal.hdontap.com/s/embed/?stream=hoteldelnorth_hdc-CUST&ratio=16:9&fluid=true',p:'Hotel del Coronado / HDOnTap',s:'embed confirmed'}
 ],
 camLinks:[
  ['Long Beach: Belmont Shore wind cam (Captain Kirk\'s)','https://www.captainkirksusa.com/wind-cam-belmont-shore'],
@@ -233,6 +238,8 @@ sources:[
  ['NHC Advisory 51 (Cyclocane mirror)','https://www.cyclocane.com/rachel-storm-tracker/'],['NWS LOX CFW','https://mesonet.agron.iastate.edu/wx/afos/p.php?pil=CFWLOX'],['NWS SGX CFW','https://forecast.weather.gov/product.php?site=SGX&issuedby=SGX&product=CFW&format=CI&version=1&glossary=0'],['NWS SGX AFD','https://forecast.weather.gov/product.php?site=sgx&issuedby=SGX&product=AFD'],['NOAA CO-OPS API (tides, verified water levels)','https://api.tidesandcurrents.noaa.gov/api/prod/'],['CA OPC 2015 record memo','https://opc.ca.gov/webmaster/_media_library/2015/12/RecordBreakingSeaLevelsMemo.pdf'],['Weather West, Oct 9','https://weatherwest.com/archives/44111'],['NBC4 Newport','https://www.nbclosangeles.com/weather-news/newport-beach-flooding/3953749/'],['MyNewsLA Newport emergency','https://mynewsla.com/business/2026/10/09/newport-beach-declares-local-emergency-amid-coastal-flooding/'],['NBC4 Long Beach','https://www.nbclosangeles.com/news/local/long-beach-hurricane-rachel-coastal-flooding/3953325/'],['FOX 11 Long Beach','https://www.foxla.com/news/long-beach-coastal-flooding-tropical-storm-rachel'],['Times of San Diego','https://timesofsandiego.com/community/2026/10/09/tropical-storm-watch-issued-for-san-diego-county-from-friday-evening-through-tuesday/'],['Voice of OC','https://voiceofoc.org/2026/10/orange-county-beach-cities-flood-ahead-of-weekend-storms/'],['NWS SGX day in history (Jan 11, 2013)','https://www.weather.gov/media/sgx/Dayinhistory/dayhistory0111.pdf'],['US Harbors Balboa Pier tides','https://www.usharbors.com/harbor/california/balboa-pier-newport-beach-ca/tides/']
 ]
 };
+const HOSTED='https://gporter12.github.io/atmos_blocking-/';
+const isFile=location.protocol==='file:';
 const canEmbed=!(window.__forceSvg)&&!/claude|anthropic/i.test(location.hostname);
 const $=s=>document.querySelector(s);
 const el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;};
@@ -326,6 +333,7 @@ function camCard(c){const d=el('div','cam');const fr=el('div','frame');const met
 const start=()=>{if(fr.dataset.on)return;fr.dataset.on='1';fr.replaceChildren();const f=document.createElement('iframe');f.allow='autoplay; fullscreen';f.allowFullscreen=true;f.referrerPolicy='no-referrer-when-downgrade';f.src=c.t==='yt'?`https://www.youtube.com/embed/${c.u}?autoplay=1&mute=1`:c.u;fr.append(f);};
 const stop=()=>{delete fr.dataset.on;fr.replaceChildren();if(c.t==='yt'){const i=el('img');i.src=`https://i.ytimg.com/vi/${c.u}/hqdefault_live.jpg`;i.alt='';i.loading='lazy';fr.append(i);}const p=el('div','play');p.append(el('span','','▶ Start cam'));fr.append(p);};
 stop();fr.addEventListener('click',start);d.append(fr,meta);d._start=start;d._stop=stop;return d;}
+if(isFile){$('#file-warn').hidden=false;}
 if(canEmbed){D.cams.forEach(c=>$('#cams').append(camCard(c)));}else{$('#embed-warn').hidden=false;$('#play-all').hidden=true;$('#stop-all').hidden=true;
 D.cams.forEach(c=>{const d=el('div','cam');const meta=el('div','meta');const a=el('a','',c.t==='yt'?'Open on YouTube':'Open player');a.href=c.t==='yt'?`https://www.youtube.com/watch?v=${c.u}`:c.u;a.target='_blank';a.rel='noopener';meta.append(el('div','pill',c.a),el('h3','',c.n),el('div','muted',c.p+' · '+c.s),a);d.append(meta);$('#cams').append(d);});}
 $('#play-all').addEventListener('click',()=>document.querySelectorAll('.cam').forEach(c=>c._start()));
